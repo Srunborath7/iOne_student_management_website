@@ -1,52 +1,93 @@
 // src/store/auth.store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { authService } from "@/services/auth.service";
-import type { Credentials, User } from "@/types/auth";
+import { authService } from "@/src/services/auth.service";
+import type { Credentials, User } from "@/src/types/auth";
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
+  successMessage: string | null;
   login: (c: Credentials) => Promise<boolean>;
   register: (c: Credentials) => Promise<boolean>;
   logout: () => void;
-  clearError: () => void;
+  checkAuth: () => Promise<void>;
+  clearFeedback: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      token: null,
       loading: false,
       error: null,
+      successMessage: null,
 
-      login: async (c) => {
-        set({ loading: true, error: null });
+      login: async (credentials) => {
+        set({ loading: true, error: null, successMessage: null });
         try {
-          set({ user: await authService.login(c), loading: false });
+          const res = await authService.login(credentials);
+          set({
+            user: res.user,
+            token: res.access_token,
+            loading: false,
+            successMessage: res.message || "Logged in successfully!",
+          });
           return true;
         } catch (e) {
-          set({ error: (e as Error).message, loading: false });
+          set({
+            error: (e as Error).message || "Failed to log in",
+            loading: false,
+          });
           return false;
         }
       },
 
-      register: async (c) => {
-        set({ loading: true, error: null });
+      register: async (credentials) => {
+        set({ loading: true, error: null, successMessage: null });
         try {
-          await authService.register(c);
-          set({ loading: false });
+          await authService.register(credentials);
+          set({
+            loading: false,
+            successMessage: "Account registered successfully! You can now log in.",
+          });
           return true;
         } catch (e) {
-          set({ error: (e as Error).message, loading: false });
+          set({
+            error: (e as Error).message || "Registration failed",
+            loading: false,
+          });
           return false;
         }
       },
 
-      logout: () => set({ user: null, error: null }),
-      clearError: () => set({ error: null }),
+      logout: () => {
+        set({ user: null, token: null, error: null, successMessage: null });
+      },
+
+      checkAuth: async () => {
+        const currentToken = get().token;
+        if (!currentToken) {
+          set({ user: null });
+          return;
+        }
+        try {
+          const user = await authService.getCurrentUser();
+          set({ user });
+        } catch {
+          // Token expired or invalid
+          set({ user: null, token: null });
+        }
+      },
+
+      clearFeedback: () => set({ error: null, successMessage: null }),
     }),
-    { name: "auth", partialize: (s) => ({ user: s.user }) }
+    {
+      name: "ione_auth",
+      partialize: (s) => ({ user: s.user, token: s.token }),
+    }
   )
 );
