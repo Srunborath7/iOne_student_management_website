@@ -25,7 +25,7 @@ export function Navbar() {
             </span>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>OOP + JWT Token Engine</span>
+              <span>We Support & Community</span>
             </div>
           </div>
         </Link>

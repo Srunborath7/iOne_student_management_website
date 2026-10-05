@@ -67,7 +67,7 @@ export default function RegisterPage() {
               </div>
               <h1 className="text-2xl font-bold text-white tracking-tight">Create an Account</h1>
               <p className="text-xs text-slate-400 mt-1">
-                Register a new user in the OOP Student Management database
+                Register a new user Student Management 
               </p>
             </div>
 

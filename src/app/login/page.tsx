@@ -18,7 +18,7 @@ export default function LoginPage() {
   // If already logged in, redirect to home
   useEffect(() => {
     if (user) {
-      router.push("/");
+      router.push("/dashboard");
     }
     clearFeedback();
   }, [user, router, clearFeedback]);
@@ -28,14 +28,8 @@ export default function LoginPage() {
     clearFeedback();
     const success = await login({ username, password });
     if (success) {
-      router.push("/");
+      router.push("/dashboard");
     }
-  };
-
-  const handleQuickFill = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    clearFeedback();
   };
 
   return (
@@ -51,9 +45,9 @@ export default function LoginPage() {
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 mb-3 shadow-lg shadow-indigo-500/25">
                 <KeyRound className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to iOne</h1>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Sign In</h1>
               <p className="text-xs text-slate-400 mt-1">
-                Enter your credentials to generate an OOP JWT access token
+                Welcome Back With Student Management System
               </p>
             </div>
 
@@ -129,38 +123,12 @@ export default function LoginPage() {
                 ) : (
                   <>
                     <KeyRound className="h-4 w-4" />
-                    <span>Generate Token & Sign In</span>
+                    <span>Sign In</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </button>
             </form>
-
-            {/* Quick Demo Credentials */}
-            <div className="mt-6 pt-5 border-t border-slate-800/80">
-              <span className="block text-[11px] font-mono text-slate-400 mb-2 uppercase tracking-wider text-center">
-                Quick Test Credentials
-              </span>
-              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill("Admin", "12345")}
-                  className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-left transition"
-                >
-                  <span className="block text-slate-400 text-[10px]">Role: Admin</span>
-                  <span className="text-white font-semibold">Admin / 12345</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill("Dara", "12345")}
-                  className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-left transition"
-                >
-                  <span className="block text-slate-400 text-[10px]">Role: Manager</span>
-                  <span className="text-white font-semibold">Dara / 12345</span>
-                </button>
-              </div>
-            </div>
-
             {/* Footer link to Register */}
             <div className="mt-5 text-center">
               <p className="text-xs text-slate-400">
