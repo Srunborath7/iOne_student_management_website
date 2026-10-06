@@ -29,7 +29,7 @@ export const courseApi = {
    */
   create: async (data: CourseCreate): Promise<Course> => {
     return httpClient.post<Course>("/courses", {
-      status: true,
+      status: "active",
       ...data,
     });
   },

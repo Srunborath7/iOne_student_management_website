@@ -15,15 +15,15 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div>
-            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
+            <span className="block max-w-[45vw] truncate bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-sm font-bold tracking-tight text-transparent sm:max-w-none sm:text-lg">
               iOne Student Management
             </span>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="hidden items-center gap-2 text-xs text-slate-400 sm:flex">
               <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>We Support & Community</span>
             </div>

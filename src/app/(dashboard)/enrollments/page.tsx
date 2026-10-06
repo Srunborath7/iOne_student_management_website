@@ -32,7 +32,6 @@ export default function EnrollmentsPage() {
   // Edit State
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<{
-    classroom: string;
     start_date: string;
     end_date: string;
     status: EnrollmentStatus;
@@ -46,14 +45,12 @@ export default function EnrollmentsPage() {
   const [createForm, setCreateForm] = useState<{
     student_id: number;
     course_id: number;
-    classroom: string;
     start_date: string;
     end_date: string;
     status: EnrollmentStatus;
   }>({
     student_id: 0,
     course_id: 0,
-    classroom: "Room A101",
     start_date: new Date().toISOString().split("T")[0],
     end_date: "",
     status: "active",
@@ -136,7 +133,6 @@ export default function EnrollmentsPage() {
     setError(null);
     setEditingId(item.id);
     setEditValues({
-      classroom: item.classroom,
       start_date: item.start_date,
       end_date: item.end_date ?? "",
       status: item.status,
@@ -151,7 +147,6 @@ export default function EnrollmentsPage() {
     setError(null);
     try {
       const updated = await enrollmentApi.update(id, {
-        classroom: editValues.classroom.trim(),
         start_date: editValues.start_date,
         end_date: editValues.end_date || null,
         status: editValues.status,
@@ -200,7 +195,6 @@ export default function EnrollmentsPage() {
       const payload: EnrollmentCreate = {
         student_id: Number(createForm.student_id),
         course_id: Number(createForm.course_id),
-        classroom: createForm.classroom.trim(),
         start_date: createForm.start_date,
         end_date: createForm.end_date ? createForm.end_date : null,
         status: createForm.status,
@@ -227,8 +221,7 @@ export default function EnrollmentsPage() {
       const q = search.toLowerCase();
       const sName = studentMap.get(e.student_id)?.toLowerCase() || "";
       const cName = courseMap.get(e.course_id)?.toLowerCase() || "";
-      const room = e.classroom.toLowerCase();
-      return sName.includes(q) || cName.includes(q) || room.includes(q);
+      return sName.includes(q) || cName.includes(q);
     }
     return true;
   });
@@ -274,7 +267,7 @@ export default function EnrollmentsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Enrollments</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Track and manage student classroom course enrollments.
+            Track and manage student course enrollments.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -378,14 +371,13 @@ export default function EnrollmentsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="table-scroll">
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
                   <th scope="col" className="px-5 py-3">ID</th>
                   <th scope="col" className="px-5 py-3">Student</th>
                   <th scope="col" className="px-5 py-3">Course</th>
-                  <th scope="col" className="px-5 py-3">Classroom</th>
                   <th scope="col" className="px-5 py-3">Dates</th>
                   <th scope="col" className="px-5 py-3">Status</th>
                   <th scope="col" className="px-5 py-3">Actions</th>
@@ -404,20 +396,6 @@ export default function EnrollmentsPage() {
                         </td>
                         <td className="px-5 py-3 text-gray-700">
                           {courseMap.get(item.course_id) || `Course #${item.course_id}`}
-                        </td>
-                        <td className="px-3 py-3">
-                          <input
-                            aria-label="Classroom"
-                            required
-                            value={editValues.classroom}
-                            onChange={(e) =>
-                              setEditValues({
-                                ...editValues,
-                                classroom: e.target.value,
-                              })
-                            }
-                            className="w-28 rounded border border-gray-300 px-2 py-1 text-xs"
-                          />
                         </td>
                         <td className="px-3 py-3 space-y-1">
                           <input
@@ -498,9 +476,6 @@ export default function EnrollmentsPage() {
                         <td className="px-5 py-4 text-gray-700">
                           {courseMap.get(item.course_id) || `Course #${item.course_id}`}
                         </td>
-                        <td className="px-5 py-4 font-mono text-xs text-gray-600">
-                          {item.classroom}
-                        </td>
                         <td className="px-5 py-4 text-xs text-gray-600">
                           <div>From: {item.start_date}</div>
                           {item.end_date && <div>To: {item.end_date}</div>}
@@ -540,8 +515,8 @@ export default function EnrollmentsPage() {
 
       {/* Add Enrollment Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900">Enroll Student</h3>
               <button
@@ -593,29 +568,13 @@ export default function EnrollmentsPage() {
                 >
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} {c.status ? "" : "(Inactive)"}
+                      {c.name} {c.status === "active" ? "" : "(Inactive)"}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700">
-                  Classroom <span className="text-red-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Room A101"
-                  value={createForm.classroom}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, classroom: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
                     Start Date <span className="text-red-500">*</span>

@@ -239,7 +239,7 @@ export default function StudentsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="table-scroll">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
@@ -411,8 +411,8 @@ export default function StudentsPage() {
 
       {/* Add Student Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900">Add New Student</h3>
               <button
@@ -456,7 +456,7 @@ export default function StudentsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
                     Age (15-100) <span className="text-red-500">*</span>

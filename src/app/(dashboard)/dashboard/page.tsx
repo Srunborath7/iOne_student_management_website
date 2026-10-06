@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   const activeEnrollments = enrollments.filter((e) => e.status === "active").length;
   const completedEnrollments = enrollments.filter((e) => e.status === "completed").length;
-  const activeCourses = courses.filter((c) => c.status).length;
+  const activeCourses = courses.filter((c) => c.status === "active").length;
 
   const stats = [
     {
@@ -69,16 +69,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 text-slate-900">
       {/* Header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+      <header className="flex flex-wrap items-start justify-between gap-4 sm:items-end">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
             Welcome back, {name}!
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Overview of student admissions, courses, and active classroom enrollments.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Link
             href="/students"
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"

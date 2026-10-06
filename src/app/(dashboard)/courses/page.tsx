@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Search, RefreshCw, BookOpen, Plus, X, CheckCircle, XCircle } from "lucide-react";
 import { courseApi, type Course, type CourseCreate } from "@/src/services/course";
+import { teacherApi, type Teacher } from "@/src/services/teacher";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,11 @@ export default function CoursesPage() {
   const [editValues, setEditValues] = useState<{
     name: string;
     description: string;
-    status: boolean;
+    status: Course["status"];
+    teacher_id: number;
+    start_date: string;
+    end_date: string;
+    classroom: string;
   } | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -27,7 +33,11 @@ export default function CoursesPage() {
   const [createForm, setCreateForm] = useState<CourseCreate>({
     name: "",
     description: "",
-    status: true,
+    status: "active",
+    teacher_id: 0,
+    start_date: new Date().toISOString().slice(0, 10),
+    end_date: "",
+    classroom: "101",
   });
 
   const loadCourses = useCallback(async (query = "") => {
@@ -49,8 +59,18 @@ export default function CoursesPage() {
     let ignore = false;
     async function init() {
       try {
-        const result = await courseApi.list();
-        if (!ignore) setCourses(result);
+        const [result, teacherList] = await Promise.all([
+          courseApi.list(),
+          teacherApi.list(),
+        ]);
+        if (!ignore) {
+          setCourses(result);
+          setTeachers(teacherList);
+          setCreateForm((current) => ({
+            ...current,
+            teacher_id: current.teacher_id || teacherList[0]?.id || 0,
+          }));
+        }
       } catch (cause) {
         if (!ignore) {
           setError(
@@ -79,6 +99,10 @@ export default function CoursesPage() {
       name: course.name,
       description: course.description ?? "",
       status: course.status,
+      teacher_id: course.teacher_id,
+      start_date: course.start_date,
+      end_date: course.end_date ?? "",
+      classroom: course.classroom ?? "",
     });
   }
 
@@ -93,6 +117,10 @@ export default function CoursesPage() {
         name: editValues.name.trim(),
         description: editValues.description.trim() || null,
         status: editValues.status,
+        teacher_id: Number(editValues.teacher_id),
+        start_date: editValues.start_date,
+        end_date: editValues.end_date || null,
+        classroom: editValues.classroom.trim(),
       });
       setCourses((current) =>
         current.map((item) => (item.id === id ? updated : item))
@@ -134,10 +162,14 @@ export default function CoursesPage() {
         name: createForm.name.trim(),
         description: createForm.description?.trim() || null,
         status: createForm.status,
+        teacher_id: Number(createForm.teacher_id),
+        start_date: createForm.start_date,
+        end_date: createForm.end_date || null,
+        classroom: createForm.classroom.trim(),
       });
       setCourses((prev) => [newCourse, ...prev]);
       setIsCreateOpen(false);
-      setCreateForm({ name: "", description: "", status: true });
+      setCreateForm({ ...createForm, name: "", description: "", status: "active", end_date: "" });
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not create course."
@@ -148,8 +180,8 @@ export default function CoursesPage() {
   }
 
   const filteredCourses = courses.filter((c) => {
-    if (statusFilter === "active") return c.status === true;
-    if (statusFilter === "inactive") return c.status === false;
+    if (statusFilter === "active") return c.status === "active";
+    if (statusFilter === "inactive") return c.status === "inactive";
     return true;
   });
 
@@ -280,12 +312,16 @@ export default function CoursesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+          <div className="table-scroll">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
                   <th scope="col" className="px-5 py-3">ID</th>
                   <th scope="col" className="px-5 py-3">Course Name</th>
+                  <th scope="col" className="px-5 py-3">Teacher</th>
+                  <th scope="col" className="px-5 py-3">Classroom</th>
+                  <th scope="col" className="px-5 py-3">Start Date</th>
+                  <th scope="col" className="px-5 py-3">End Date</th>
                   <th scope="col" className="px-5 py-3">Description</th>
                   <th scope="col" className="px-5 py-3">Status</th>
                   <th scope="col" className="px-5 py-3">Actions</th>
@@ -300,19 +336,16 @@ export default function CoursesPage() {
                           #{course.id}
                         </td>
                         <td className="px-3 py-3">
-                          <input
-                            aria-label="Course name"
-                            required
-                            value={editValues.name}
-                            onChange={(e) =>
-                              setEditValues({
-                                ...editValues,
-                                name: e.target.value,
-                              })
-                            }
-                            className="w-48 rounded border border-gray-300 px-2 py-1 text-sm"
-                          />
+                          <input aria-label="Course name" required value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} className="w-48 rounded border border-gray-300 px-2 py-1 text-sm" />
                         </td>
+                        <td className="px-3 py-3">
+                          <select aria-label="Course teacher" required value={editValues.teacher_id} onChange={(e) => setEditValues({ ...editValues, teacher_id: Number(e.target.value) })} className="w-36 rounded border border-gray-300 px-2 py-1 text-sm">
+                            {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-3 py-3"><select aria-label="Course classroom" required value={editValues.classroom} onChange={(e) => setEditValues({ ...editValues, classroom: e.target.value })} className="rounded border border-gray-300 px-2 py-1 text-sm">{Array.from({ length: 10 }, (_, index) => String(101 + index)).map((room) => <option key={room} value={room}>{room}</option>)}</select></td>
+                        <td className="px-3 py-3"><input aria-label="Course start date" required type="date" value={editValues.start_date} onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} className="rounded border border-gray-300 px-2 py-1 text-sm" /></td>
+                        <td className="px-3 py-3"><input aria-label="Course end date" type="date" value={editValues.end_date} onChange={(e) => setEditValues({ ...editValues, end_date: e.target.value })} className="rounded border border-gray-300 px-2 py-1 text-sm" /></td>
                         <td className="px-3 py-3">
                           <input
                             aria-label="Course description"
@@ -328,11 +361,11 @@ export default function CoursesPage() {
                         </td>
                         <td className="px-3 py-3">
                           <select
-                            value={editValues.status ? "active" : "inactive"}
+                            value={editValues.status}
                             onChange={(e) =>
                               setEditValues({
                                 ...editValues,
-                                status: e.target.value === "active",
+                                status: e.target.value as Course["status"],
                               })
                             }
                             className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -375,11 +408,15 @@ export default function CoursesPage() {
                         <td className="px-5 py-4 font-medium text-gray-900">
                           {course.name}
                         </td>
+                        <td className="px-5 py-4 text-gray-600">{teachers.find((teacher) => teacher.id === course.teacher_id)?.name ?? `Teacher #${course.teacher_id}`}</td>
+                        <td className="px-5 py-4 text-gray-600">{course.classroom || "—"}</td>
+                        <td className="px-5 py-4 text-gray-600">{course.start_date}</td>
+                        <td className="px-5 py-4 text-gray-600">{course.end_date || "—"}</td>
                         <td className="px-5 py-4 text-gray-600">
                           {course.description || "—"}
                         </td>
                         <td className="px-5 py-4">
-                          {course.status ? (
+                          {course.status === "active" ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
                               <CheckCircle size={12} />
                               Active
@@ -423,8 +460,8 @@ export default function CoursesPage() {
 
       {/* Add Course Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900">Add New Course</h3>
               <button
@@ -453,6 +490,22 @@ export default function CoursesPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-gray-700">Teacher <span className="text-red-500">*</span></label>
+                <select required value={createForm.teacher_id || ""} onChange={(e) => setCreateForm({ ...createForm, teacher_id: Number(e.target.value) })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                  <option value="" disabled>Select a teacher</option>
+                  {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                </select>
+                {teachers.length === 0 && <p className="mt-1 text-xs text-amber-700">Add a teacher before creating a course.</p>}
+              </div>
+
+              <div><label className="block text-xs font-medium text-gray-700">Classroom <span className="text-red-500">*</span></label><select required value={createForm.classroom} onChange={(e) => setCreateForm({ ...createForm, classroom: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">{Array.from({ length: 10 }, (_, index) => String(101 + index)).map((room) => <option key={room} value={room}>{room}</option>)}</select></div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div><label className="block text-xs font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label><input required type="date" value={createForm.start_date} onChange={(e) => setCreateForm({ ...createForm, start_date: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" /></div>
+                <div><label className="block text-xs font-medium text-gray-700">End Date</label><input type="date" min={createForm.start_date} value={createForm.end_date ?? ""} onChange={(e) => setCreateForm({ ...createForm, end_date: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" /></div>
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-gray-700">
                   Description
                 </label>
@@ -467,19 +520,7 @@ export default function CoursesPage() {
                 />
               </div>
 
-              <div>
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={createForm.status ?? true}
-                    onChange={(e) =>
-                      setCreateForm({ ...createForm, status: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span>Active & available for enrollment</span>
-                </label>
-              </div>
+              <div><label className="block text-xs font-medium text-gray-700">Status</label><select value={createForm.status ?? "active"} onChange={(e) => setCreateForm({ ...createForm, status: e.target.value as Course["status"] })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
 
               <div className="mt-6 flex justify-end gap-3 pt-2">
                 <button
@@ -491,7 +532,7 @@ export default function CoursesPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={createSubmitting}
+                  disabled={createSubmitting || teachers.length === 0}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {createSubmitting ? "Creating..." : "Create Course"}

@@ -4,6 +4,7 @@ export interface User {
   username: string;
   role: string;
   is_active: boolean;
+  teacher_id?: number | null;
 }
 
 export interface Credentials {
