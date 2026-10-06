@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { KeyRound, User as UserIcon, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldCheck, ArrowRight } from "lucide-react";
+import { KeyRound, User as UserIcon, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/src/store/auth.store";
 import { Navbar } from "@/src/components/Navbar";
 

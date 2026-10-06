@@ -1,99 +1,206 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuthStore } from "@/src/store/auth.store";
-
-// Placeholder data: replace with your API calls
-const stats = [
-  { label: "Total users", value: "1,284", change: "+12 this week", up: true },
-  { label: "Active today", value: "342", change: "+5% vs yesterday", up: true },
-  { label: "Open tasks", value: "27", change: "4 overdue", up: false },
-  { label: "Revenue this month", value: "$18,420", change: "+8.2% vs last month", up: true },
-];
-
-const activity = [
-  { who: "Sokha", what: "created a new project", when: "5 min ago" },
-  { who: "Dara", what: "updated billing details", when: "42 min ago" },
-  { who: "Maly", what: "invited 3 team members", when: "2 hours ago" },
-  { who: "Vireak", what: "closed task #214", when: "Yesterday" },
-];
-
-const actions = ["Add user", "Create project", "Export report"];
+import { studentApi, type Student } from "@/src/services/student";
+import { courseApi, type Course } from "@/src/services/course";
+import { enrollmentApi, type Enrollment } from "@/src/services/enrollment";
+import { Users, BookOpen, GraduationCap, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
   const name = user?.username ?? "there";
 
+  const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const [sList, cList, eList] = await Promise.all([
+          studentApi.list().catch(() => []),
+          courseApi.list().catch(() => []),
+          enrollmentApi.list().catch(() => []),
+        ]);
+        setStudents(sList);
+        setCourses(cList);
+        setEnrollments(eList);
+      } finally {
+        setLoading(false);
+      }
+    }
+    void fetchStats();
+  }, []);
+
+  const activeEnrollments = enrollments.filter((e) => e.status === "active").length;
+  const completedEnrollments = enrollments.filter((e) => e.status === "completed").length;
+  const activeCourses = courses.filter((c) => c.status).length;
+
+  const stats = [
+    {
+      label: "Total Students",
+      value: loading ? "..." : String(students.length),
+      sub: "Active enrolled learners",
+      icon: <Users className="text-blue-600" size={24} />,
+    },
+    {
+      label: "Total Courses",
+      value: loading ? "..." : String(courses.length),
+      sub: `${activeCourses} active courses`,
+      icon: <BookOpen className="text-emerald-600" size={24} />,
+    },
+    {
+      label: "Active Enrollments",
+      value: loading ? "..." : String(activeEnrollments),
+      sub: `${completedEnrollments} completed`,
+      icon: <GraduationCap className="text-purple-600" size={24} />,
+    },
+    {
+      label: "Total Classes",
+      value: loading ? "..." : String(enrollments.length),
+      sub: "Overall admissions",
+      icon: <CheckCircle2 className="text-teal-600" size={24} />,
+    },
+  ];
+
   return (
-    <div className="text-slate-900">
-        {/* Header */}
-        <header className="flex items-end justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Welcome back, {name}
-            </h1>
-            <p className="mt-1 text-slate-500">
-              Here is what changed since your last visit.
-            </p>
-          </div>
-          <button className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">
-            Create project
-          </button>
-        </header>
+    <div className="space-y-8 text-slate-900">
+      {/* Header */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Welcome back, {name}!
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Overview of student admissions, courses, and active classroom enrollments.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href="/students"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+          >
+            Manage Students
+          </Link>
+          <Link
+            href="/enrollments"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+          >
+            Enrollments
+          </Link>
+        </div>
+      </header>
 
-        {/* Key numbers: one connected panel instead of separate cards */}
-        <section
-          aria-label="Key numbers"
-          className="mt-8 grid grid-cols-2 divide-x divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white lg:grid-cols-4"
-        >
-          {stats.map((s) => (
-            <div key={s.label} className="p-6">
-              <p className="text-sm text-slate-500">{s.label}</p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">{s.value}</p>
-              <p
-                className={`mt-1 text-sm ${
-                  s.up ? "text-teal-700" : "text-rose-700"
-                }`}
-              >
-                {s.change}
-              </p>
+      {/* Key Numbers */}
+      <section
+        aria-label="Key statistics"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-500">{s.label}</span>
+              <div className="rounded-lg bg-gray-50 p-2">{s.icon}</div>
             </div>
-          ))}
-        </section>
+            <p className="mt-3 text-3xl font-bold text-gray-900 tabular-nums">
+              {s.value}
+            </p>
+            <p className="mt-1 text-xs text-gray-400">{s.sub}</p>
+          </div>
+        ))}
+      </section>
 
-        <div className="mt-8 grid gap-8 xl:grid-cols-3">
-          {/* Activity */}
-          <section className="xl:col-span-2">
-            <h2 className="text-lg font-semibold">Recent activity</h2>
-            <ul className="m  t-3 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
-              {activity.map((a, i) => (
-                <li key={i} className="flex items-center gap-4 px-5 py-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-medium text-slate-600">
-                    {a.who[0]}
-                  </span>
-                  <p className="flex-1 text-sm">
-                    <span className="font-medium">{a.who}</span>{" "}
-                    <span className="text-slate-600">{a.what}</span>
-                  </p>
-                  <time className="text-sm text-slate-400">{a.when}</time>
+      {/* Recent Activity & Shortcuts */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Recent Students */}
+        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between border-b pb-4">
+            <h2 className="font-semibold text-gray-900">Recent Students</h2>
+            <Link
+              href="/students"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
+            >
+              View all <ArrowRight size={14} />
+            </Link>
+          </div>
+          {students.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-500">
+              No students found.
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {students.slice(0, 5).map((student) => (
+                <li
+                  key={student.id}
+                  className="flex items-center justify-between py-3 text-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700 text-xs">
+                      {student.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{student.name}</p>
+                      <p className="text-xs text-gray-500">{student.email}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700 font-medium">
+                      {student.major || "General"}
+                    </span>
+                  </div>
                 </li>
               ))}
             </ul>
-          </section>
+          )}
+        </section>
 
-          {/* Shortcuts */}
-          <section>
-            <h2 className="text-lg font-semibold">Shortcuts</h2>
-            <div className="mt-3 flex flex-col gap-2">
-              {actions.map((label) => (
-                <button
-                  key={label}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
-                >
-                  {label}
-                </button>
-              ))}
+        {/* Shortcuts / Quick Actions */}
+        <section className="space-y-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="font-semibold text-gray-900 mb-4">Quick Navigation</h2>
+            <div className="flex flex-col gap-2.5">
+              <Link
+                href="/students"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm font-medium text-gray-700 hover:border-blue-500 hover:bg-blue-50/50 hover:text-blue-600 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <Users size={18} className="text-blue-600" />
+                  <span>Student Directory</span>
+                </div>
+                <ArrowRight size={16} className="text-gray-400" />
+              </Link>
+
+              <Link
+                href="/courses"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm font-medium text-gray-700 hover:border-emerald-500 hover:bg-emerald-50/50 hover:text-emerald-600 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <BookOpen size={18} className="text-emerald-600" />
+                  <span>Course Catalog</span>
+                </div>
+                <ArrowRight size={16} className="text-gray-400" />
+              </Link>
+
+              <Link
+                href="/enrollments"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm font-medium text-gray-700 hover:border-purple-500 hover:bg-purple-50/50 hover:text-purple-600 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <GraduationCap size={18} className="text-purple-600" />
+                  <span>Class Enrollments</span>
+                </div>
+                <ArrowRight size={16} className="text-gray-400" />
+              </Link>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

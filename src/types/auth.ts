@@ -1,29 +1,12 @@
 // src/types/auth.ts
-export interface User {
-  id: number;
-  username: string;
-  role: string;
-  is_active: boolean;
-}
-
-export interface Credentials {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  message: string;
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  user: User;
-}
-
-export interface Student {
-  id: number;
-  name: string;
-  email: string;
-  age: number;
-  phone: string;
-  major?: string | null;
-}
+// Re-export common types from the modular service layer for backward compatibility
+export type { User, Credentials, LoginResponse, RegisterResponse } from "@/src/services/auth";
+export type { Student, StudentCreate, StudentUpdate, StudentQueryParams } from "@/src/services/student";
+export type { Course, CourseCreate, CourseUpdate, CourseQueryParams } from "@/src/services/course";
+export type {
+  Enrollment,
+  EnrollmentCreate,
+  EnrollmentUpdate,
+  EnrollmentStatus,
+  EnrollmentQueryParams,
+} from "@/src/services/enrollment";

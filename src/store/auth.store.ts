@@ -1,8 +1,7 @@
 // src/store/auth.store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { authService } from "@/src/services/auth.service";
-import type { Credentials, User } from "@/src/types/auth";
+import { authService, type Credentials, type User } from "@/src/services/auth";
 
 interface AuthState {
   user: User | null;
